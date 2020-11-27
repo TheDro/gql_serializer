@@ -1,22 +1,22 @@
-require_relative 'lib/gql-serializer/version'
+require_relative 'lib/gql_serializer/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "gql-serializer"
+  spec.name          = "gql_serializer"
   spec.version       = GqlSerializer::VERSION
   spec.authors       = ["TheDro"]
   spec.email         = ["andrewsc32@protonmail.com"]
 
   spec.summary       = %q{A gem that adds `as_gql` to easily serialize ActiveRecord objects}
   spec.description   = %q{A gem that adds `as_gql` to easily serialize ActiveRecord objects}
-  spec.homepage      = "https://github.com/TheDro/gql-serializer"
+  spec.homepage      = "https://github.com/TheDro/gql_serializer"
   spec.license       = "MIT"
   spec.required_ruby_version = Gem::Requirement.new(">= 2.3.0")
 
   spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/TheDro/gql-serializer"
-  spec.metadata["changelog_uri"] = "https://github.com/TheDro/gql-serializer"
+  spec.metadata["source_code_uri"] = "https://github.com/TheDro/gql_serializer"
+  spec.metadata["changelog_uri"] = "https://github.com/TheDro/gql_serializer"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
