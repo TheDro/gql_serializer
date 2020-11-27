@@ -1,6 +1,6 @@
-RSpec.describe Gql::Serializer do
+RSpec.describe GqlSerializer do
   it "has a version number" do
-    expect(Gql::Serializer::VERSION).not_to be nil
+    expect(GqlSerializer::VERSION).not_to be nil
   end
 
   it "does something useful" do
