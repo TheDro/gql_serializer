@@ -1,11 +1,8 @@
 require "gql_serializer/version"
+require "gql_serializer/extensions"
+
 
 module GqlSerializer
-  class Error < StandardError; end
-
-  def self.hello
-    'hello'
-  end
 
   def self.parse_query(input)
     query = input.dup
