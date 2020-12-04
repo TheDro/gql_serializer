@@ -17,5 +17,9 @@ module GqlSerializer
       raise "Specified case '#{value}' is not supported" unless SUPPORTED_CASES.include?(value)
       @case = value
     end
+
+    def to_h
+      {case: @case}
+    end
   end
 end
