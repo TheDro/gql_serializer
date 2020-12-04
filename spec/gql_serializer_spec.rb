@@ -179,7 +179,14 @@ RSpec.describe GqlSerializer do
       end
 
       it 'uses the configured case by default' do
-        binding.pry
+        GqlSerializer.configuration.case = GqlSerializer::Configuration::CAMEL_CASE
+        user = CaseUser.create(name: 'John')
+
+        expect(user.as_gql('snake_case camelCase'))
+          .to eq({'snakeCase' => 'snake', 'camelCase' => 'camel'})
+
+      ensure
+        GqlSerializer.configuration.reset
       end
     end
   end

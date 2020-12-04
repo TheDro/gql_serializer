@@ -2,6 +2,10 @@
 
 RSpec.describe GqlSerializer::Configuration do
   describe 'case' do
+    after do
+      GqlSerializer.configuration.reset
+    end
+
     it 'supports none, snake case and camel case' do
       GqlSerializer.configure do |config|
         config.case= GqlSerializer::Configuration::NONE_CASE

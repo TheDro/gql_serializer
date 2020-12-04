@@ -8,7 +8,7 @@ module GqlSerializer
     SUPPORTED_CASES = [CAMEL_CASE, SNAKE_CASE, NONE_CASE]
 
     def initialize
-      @case = NONE_CASE
+      reset
     end
 
     attr_reader :case
@@ -16,6 +16,10 @@ module GqlSerializer
     def case=(value)
       raise "Specified case '#{value}' is not supported" unless SUPPORTED_CASES.include?(value)
       @case = value
+    end
+
+    def reset
+      @case = NONE_CASE
     end
 
     def to_h
