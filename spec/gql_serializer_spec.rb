@@ -1,5 +1,4 @@
 require 'active_record'
-require 'byebug'
 
 RSpec.describe GqlSerializer do
   it "has a version number" do
@@ -59,6 +58,9 @@ RSpec.describe GqlSerializer do
 
     class TestUser < ActiveRecord::Base
       has_many :test_orders
+      def encoded_id
+        "TestUser-#{id}"
+      end
     end
 
     class TestOrder < ActiveRecord::Base
@@ -140,6 +142,45 @@ RSpec.describe GqlSerializer do
         'address' => user.email,
         'orders' => [{'cost' => orders[0].total}, {'cost' => orders[1].total}]
       })
+    end
+
+    it 'supports methods' do
+      user = TestUser.create(name: 'John', email: 'john@test.com')
+
+      expect(user.as_gql('encoded_id')).to eq({'encoded_id' => "TestUser-#{user.id}"})
+      expect(user.as_gql('encoded_id:id')).to eq({'id' => "TestUser-#{user.id}"})
+    end
+
+    describe 'case conversions' do
+      class CaseUser < TestUser
+        def snake_case
+          'snake'
+        end
+
+        def camelCase
+          'camel'
+        end
+      end
+
+      it 'converts keys to camel case' do
+        user = CaseUser.create(name: 'John')
+
+        expect(user.as_gql('snake_case camelCase',
+          {case: GqlSerializer::Configuration::CAMEL_CASE}))
+          .to eq({'snakeCase' => 'snake', 'camelCase' => 'camel'})
+      end
+
+      it 'converts keys to snake case' do
+        user = CaseUser.create(name: 'John')
+
+        expect(user.as_gql('snake_case camelCase',
+          {case: GqlSerializer::Configuration::SNAKE_CASE}))
+        .to eq({'snake_case' => 'snake', 'camel_case' => 'camel'})
+      end
+
+      it 'uses the configured case by default' do
+        binding.pry
+      end
     end
   end
 

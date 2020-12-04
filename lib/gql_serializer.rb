@@ -1,8 +1,18 @@
 require "gql_serializer/version"
 require "gql_serializer/extensions"
+require "gql_serializer/configuration"
 
 
 module GqlSerializer
+
+  def self.configuration
+    @configuration ||= Configuration.new
+  end
+
+  def self.configure
+    yield configuration
+  end
+
 
   def self.parse_query(input)
     query = input.dup
@@ -36,7 +46,7 @@ module GqlSerializer
     include_array
   end
 
-  def self.serialize(record, hasharray)
+  def self.serialize(record, hasharray, options)
 
     if record.nil?
       return nil
@@ -44,40 +54,44 @@ module GqlSerializer
 
     if record.respond_to? :map
       return record.map do |r|
-        self.serialize(r, hasharray)
+        self.serialize(r, hasharray, options)
       end
     end
 
     hash = {}
     model = record.class
+    all_relations = model.reflections.keys
 
-    attributes = hasharray.filter do |e|
-      next false if !e.is_a?(String)
+    relations = hasharray.filter do |e|
+      next true if !e.is_a?(String)
 
       key, alias_key = e.split(':')
-      model.attribute_names.include?(key)
+      all_relations.include?(key)
     end
 
-    relations = hasharray - attributes
+    attributes = hasharray - relations
     attributes = model.attribute_names if attributes.empty?
 
     attributes.each do |e|
       key, alias_key = e.split(':')
-      alias_key ||= key
+      alias_key = apply_case(alias_key || key, options[:case])
+
       hash[alias_key] = record.public_send(key)
     end
 
     relations.each do |e|
       if e.is_a? String
         key, alias_key = e.split(':')
-        alias_key ||= key
+        alias_key = apply_case(alias_key || key, options[:case])
+
         rel_records = record.public_send(key)
-        hash[alias_key] = self.serialize(rel_records, [])
+        hash[alias_key] = self.serialize(rel_records, [], options)
       else
         key, alias_key = e.keys.first.split(':')
-        alias_key ||= key
+        alias_key = apply_case(alias_key || key, options[:case])
+
         rel_records = record.public_send(key)
-        hash[alias_key] = self.serialize(rel_records, e.values.first)
+        hash[alias_key] = self.serialize(rel_records, e.values.first, options)
       end
     end
 
@@ -86,6 +100,20 @@ module GqlSerializer
 
 
   private
+
+  def self.apply_case(key, key_case)
+    case key_case
+    when Configuration::CAMEL_CASE
+      result = key.camelize
+      result[0] = result[0].downcase
+    when Configuration::SNAKE_CASE
+      result = key.underscore
+    else
+      result = key
+    end
+
+    result
+  end
 
   def self.parse_it(query)
     result = []

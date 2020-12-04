@@ -8,25 +8,27 @@ module GqlSerializer
   end
 
   module Relation
-    def as_gql(query = nil)
+    def as_gql(query = nil, options = {})
       query_hasharray = query ? GqlSerializer.parse_query(query) : []
       include_hasharray = GqlSerializer.query_include(self.model, query_hasharray)
       records = self.includes(include_hasharray).records
-      GqlSerializer.serialize(records, query_hasharray)
+      options_with_defaults = GqlSerializer.configuration.to_h.merge(options)
+      GqlSerializer.serialize(records, query_hasharray, options_with_defaults)
     end
   end
 
   module ActiveRecord
-    def self.as_gql(query = nil)
-      self.all.as_gql(query)
+    def self.as_gql(query = nil, options = {})
+      self.all.as_gql(query, options)
     end
 
-    def as_gql(query = nil)
+    def as_gql(query = nil, options = {})
 
       query_hasharray = query ? GqlSerializer.parse_query(query) : []
       include_hasharray = GqlSerializer.query_include(self.class, query_hasharray)
       record = include_hasharray.empty? ? self : self.class.where(id: self).includes(include_hasharray).first
-      GqlSerializer.serialize(record, query_hasharray)
+      options_with_defaults = GqlSerializer.configuration.to_h.merge(options)
+      GqlSerializer.serialize(record, query_hasharray, options_with_defaults)
     end
   end
 end
