@@ -60,15 +60,16 @@ module GqlSerializer
 
     hash = {}
     model = record.class
+    all_relations = model.reflections.keys
 
-    attributes = hasharray.filter do |e|
-      next false if !e.is_a?(String)
+    relations = hasharray.filter do |e|
+      next true if !e.is_a?(String)
 
       key, alias_key = e.split(':')
-      model.attribute_names.include?(key)
+      all_relations.include?(key)
     end
 
-    relations = hasharray - attributes
+    attributes = hasharray - relations
     attributes = model.attribute_names if attributes.empty?
 
     attributes.each do |e|

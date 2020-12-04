@@ -1,5 +1,4 @@
 require 'active_record'
-require 'byebug'
 
 RSpec.describe GqlSerializer do
   it "has a version number" do
@@ -59,6 +58,9 @@ RSpec.describe GqlSerializer do
 
     class TestUser < ActiveRecord::Base
       has_many :test_orders
+      def encoded_id
+        "TestUser-#{id}"
+      end
     end
 
     class TestOrder < ActiveRecord::Base
@@ -140,6 +142,12 @@ RSpec.describe GqlSerializer do
         'address' => user.email,
         'orders' => [{'cost' => orders[0].total}, {'cost' => orders[1].total}]
       })
+    end
+
+    it 'supports methods' do
+      user = TestUser.create(name: 'John', email: 'john@test.com')
+
+      expect(user.as_gql('encoded_id')).to eq({'encoded_id' => "TestUser-#{user.id}"})
     end
   end
 
