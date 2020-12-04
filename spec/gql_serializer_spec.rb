@@ -148,6 +148,7 @@ RSpec.describe GqlSerializer do
       user = TestUser.create(name: 'John', email: 'john@test.com')
 
       expect(user.as_gql('encoded_id')).to eq({'encoded_id' => "TestUser-#{user.id}"})
+      expect(user.as_gql('encoded_id:id')).to eq({'id' => "TestUser-#{user.id}"})
     end
   end
 
