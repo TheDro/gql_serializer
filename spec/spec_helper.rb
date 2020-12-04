@@ -1,6 +1,6 @@
 require "bundler/setup"
 require "gql_serializer"
-require "byebug"
+require "pry"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
