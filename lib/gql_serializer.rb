@@ -1,8 +1,18 @@
 require "gql_serializer/version"
 require "gql_serializer/extensions"
+require "gql_serializer/configuration"
 
 
 module GqlSerializer
+
+  def self.configuration
+    @configuration ||= Configuration.new
+  end
+
+  def self.configure
+    yield configuration
+  end
+
 
   def self.parse_query(input)
     query = input.dup
