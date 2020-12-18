@@ -76,7 +76,7 @@ module GqlSerializer
       key, alias_key = e.split(':')
       alias_key = apply_case(alias_key || key, options[:case])
 
-      hash[alias_key] = record.public_send(key)
+      hash[alias_key] = coerce_value(record.public_send(key))
     end
 
     relations.each do |e|
@@ -96,6 +96,12 @@ module GqlSerializer
     end
 
     hash
+  end
+
+  def self.coerce_value(value)
+    return value.to_f if value.is_a? BigDecimal
+    return value.new_offset(0).strftime("%FT%TZ") if value.is_a? DateTime
+    value
   end
 
 
