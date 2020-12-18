@@ -22,7 +22,78 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Say you have a class User
+
+```ruby
+class User < ActiveRecord::Base
+  def encoded_id
+    "User-#{id}"
+  end
+end
+```
+
+and you retrieve a user from your database
+
+```ruby
+user = User.create(name: 'Test User', email: 'user@test.com')
+```
+
+You can run
+
+```ruby
+user.as_gql
+```
+
+which will produce the following output
+
+```ruby
+{
+    "id"=>1,
+    "name"=>"Test User",
+    "email"=>"user@test.com"
+}
+```
+
+If you want to specify certain fields, you can pass them in as strings
+
+```ruby
+user.as_gql('encoded_id')
+```
+
+which would produce the following output
+
+```ruby
+{
+    "encoded_id"=>"TestUser-1"
+}
+```
+
+## Configuration
+
+### Case conversion
+
+Configuring the serializer to its default behavior of no case conversion:
+
+```ruby
+GqlSerializer.configure do |config|
+  config.case = GqlSerializer::Configuration::NONE_CASE
+end
+```
+
+It also supports conversion to camel case:
+
+```ruby
+GqlSerializer.configure do |config|
+  config.case = GqlSerializer::Configuration::CAMEL_CASE
+end
+```
+
+Or snake case:
+```ruby
+GqlSerializer.configure do |config|
+  config.case = GqlSerializer::Configuration::SNAKE_CASE
+end
+```
 
 ## Development
 
