@@ -101,6 +101,7 @@ module GqlSerializer
   def self.coerce_value(value)
     return value.to_f if value.is_a? BigDecimal
     return value.new_offset(0).strftime("%FT%TZ") if value.is_a? DateTime
+    return value.utc.iso8601 if value.is_a? Time
     value
   end
 

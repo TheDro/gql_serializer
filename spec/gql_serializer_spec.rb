@@ -158,15 +158,19 @@ RSpec.describe GqlSerializer do
           BigDecimal('0.012')
         end
 
-        def date
+        def date_time
           DateTime.parse('2020-12-15T01:30:00-0500')
+        end
+
+        def time
+          Time.parse('2020-12-16T01:30:00-0500')
         end
       end
 
       it 'serializes value to a standard format' do
         user = CoerceUser.create()
-        expect(user.as_gql('big_decimal date')).to eq({
-          'big_decimal' => 0.012, 'date' => '2020-12-15T06:30:00Z'
+        expect(user.as_gql('big_decimal date_time time')).to eq({
+          'big_decimal' => 0.012, 'date_time' => '2020-12-15T06:30:00Z', 'time' => '2020-12-16T06:30:00Z'
         })
       end
     end
