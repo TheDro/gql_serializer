@@ -1,8 +1,6 @@
 # GqlSerializer
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/gql_serializer`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+GqlSerializer is a gem that makes it easy to serialize ActiveRecord objects into json using a short syntax similar to GraphQL instead of the more verbose syntax used by the `as_json` method.
 
 ## Installation
 
@@ -20,80 +18,113 @@ Or install it yourself as:
 
     $ gem install gql_serializer
 
-## Usage
+## Basic Usage
 
-Say you have a class User
+Say you have the following `User` class
 
 ```ruby
 class User < ActiveRecord::Base
+  attribute :email_address, :string
+  attribute :name, :string
   def encoded_id
     "User-#{id}"
   end
 end
 ```
 
-and you retrieve a user from your database
+and you create a user
 
 ```ruby
-user = User.create(name: 'Test User', email: 'user@test.com')
+user = User.create(name: 'Test User', email_address: 'user@test.com')
 ```
 
-You can run
+You can call `as_gql` with no arguments to get:
 
 ```ruby
 user.as_gql
-```
-
-which will produce the following output
-
-```ruby
-{
-    "id"=>1,
-    "name"=>"Test User",
-    "email"=>"user@test.com"
+=> {
+  "id"=>1,
+  "name"=>"Test User",
+  "email_address"=>"user@test.com"
 }
 ```
 
-If you want to specify certain fields, you can pass them in as strings
+By default, all attributes are included in the serialized form but you can create you want with the right arguments and include methods. 
 
 ```ruby
-user.as_gql('encoded_id')
+user.as_gql('name encoded_id')
+=> {
+  "name" => "Test User",
+  "encoded_id" => "User-1"
+}
 ```
 
-which would produce the following output
+## Advanced Usage
+
+Here's where the library becomes more powerful. The GraphQL-esque syntax allows for aliasing and digging into nested objects.
 
 ```ruby
-{
-    "encoded_id"=>"TestUser-1"
+class User < ActiveRecord::Base
+  attribute :email_address, :string
+  attribute :name, :string
+  has_many :orders
+  def encoded_id
+    "User-#{id}"
+  end
+end
+
+class Order < ActiveRecord::Base
+  belongs_to :user
+  attribute :total, :float
+  attribute :placed_at, :date_time
+end
+
+user = User.create(name: 'Test User', email_address: 'user@test.com')
+order = Order.create(user: user, total: 3.50, placed_at: DateTime.now)
+
+user.as_gql('name orders')
+=> {
+  "name" => "Test User",
+  "orders" => [{
+    "id" => 1,
+    "total" => 3.5,
+    "placed_at" => "2020-12-23T08:30:00Z"
+  }]
+}
+
+order.as_gql('user { email_address encoded_id:real_id }')
+=> {
+  "id" => 1,
+  "total" => 3.5,
+  "placed_at" => "2020-12-23T08:30:00Z",
+  "user" => {
+    "email_address" => "user@test.com",
+    "real_id" => "User-1"
+  }
+}
+```
+
+It's also possible to automatically convert the case of the keys into either camel case or snake case. We recommend that you configure this globally (see Configuration section) but it can be done using an optional second argument.
+
+```ruby
+user.as_gql('email_address name:full_name', {case: GqlSerializer::Configuration::CAMEL_CASE})
+=> {
+  "emailAddress" => "user@test.com",
+  "fullName" => "Test User"
 }
 ```
 
 ## Configuration
 
-### Case conversion
-
-Configuring the serializer to its default behavior of no case conversion:
+In a Rails application, the configuration can be added to an initializer in `config/initalizers/gql_serializer.rb`. The following is the default configuration (no change):
 
 ```ruby
 GqlSerializer.configure do |config|
-  config.case = GqlSerializer::Configuration::NONE_CASE
+  config.case = GqlSerializer::Configuration::NONE_CASE # no case conversion
 end
 ```
 
-It also supports conversion to camel case:
-
-```ruby
-GqlSerializer.configure do |config|
-  config.case = GqlSerializer::Configuration::CAMEL_CASE
-end
-```
-
-Or snake case:
-```ruby
-GqlSerializer.configure do |config|
-  config.case = GqlSerializer::Configuration::SNAKE_CASE
-end
-```
+The options for `case` are: `NONE_CASE, CAMEL_CASE, SNAKE_CASE`.
 
 ## Development
 
@@ -103,7 +134,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/gql_serializer.
+Bug reports and pull requests are welcome on GitHub at https://github.com/TheDro/gql_serializer.
 
 
 ## License
