@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    gql_serializer (1.1.1)
+    gql_serializer (2.0.0)
       activerecord (>= 5.2, < 6.1)
 
 GEM
@@ -44,7 +44,7 @@ GEM
     rspec-support (3.10.0)
     sqlite3 (1.4.2)
     thread_safe (0.3.6)
-    tzinfo (1.2.8)
+    tzinfo (1.2.9)
       thread_safe (~> 0.1)
     zeitwerk (2.4.2)
 

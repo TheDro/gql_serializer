@@ -1,6 +1,7 @@
 require 'active_record'
 
 RSpec.describe GqlSerializer do
+
   it "has a version number" do
     expect(GqlSerializer::VERSION).not_to be nil
   end
@@ -55,7 +56,6 @@ RSpec.describe GqlSerializer do
       end
     end
 
-
     class TestUser < ActiveRecord::Base
       has_many :test_orders
       def encoded_id
@@ -77,6 +77,7 @@ RSpec.describe GqlSerializer do
       ActiveRecord::Migration.drop_table(:test_orders)
       ActiveRecord::Migration.drop_table(:test_items)
     end
+
 
     it 'serializes a model' do
       user = TestUser.create(name: 'John', email: 'john@test.com')
@@ -149,6 +150,29 @@ RSpec.describe GqlSerializer do
 
       expect(user.as_gql('encoded_id')).to eq({'encoded_id' => "TestUser-#{user.id}"})
       expect(user.as_gql('encoded_id:id')).to eq({'id' => "TestUser-#{user.id}"})
+    end
+
+    describe 'coerce_value' do
+      class CoerceUser < TestUser
+        def big_decimal
+          BigDecimal('0.012')
+        end
+
+        def date_time
+          DateTime.parse('2020-12-15T01:30:00-0500')
+        end
+
+        def time
+          Time.parse('2020-12-16T01:30:00-0500')
+        end
+      end
+
+      it 'serializes value to a standard format' do
+        user = CoerceUser.create()
+        expect(user.as_gql('big_decimal date_time time')).to eq({
+          'big_decimal' => 0.012, 'date_time' => '2020-12-15T06:30:00Z', 'time' => '2020-12-16T06:30:00Z'
+        })
+      end
     end
 
     describe 'case conversions' do
