@@ -46,53 +46,69 @@ module GqlSerializer
     include_array
   end
 
-  def self.serialize(record, hasharray, options)
+  def self.serialize(record, hasharray, options, instructions = {})
 
     if record.nil?
       return nil
     end
 
+
     if record.respond_to? :map
       return record.map do |r|
-        self.serialize(r, hasharray, options)
+        self.serialize(r, hasharray, options, instructions)
+      end
+    end
+
+    id = "#{record.class}, #{hasharray}"
+    instruction = instructions[id]
+    if (!instruction)
+      instruction = {klass: record.class, hasharray: hasharray, relations: [], attributes: []}
+      instructions[id] = instruction
+
+
+      model = record.class
+      all_relations = model.reflections.keys
+
+      relations = hasharray.filter do |e|
+        next true if !e.is_a?(String)
+
+        key, alias_key = e.split(':')
+
+        all_relations.include?(key)
+      end
+
+      attributes = hasharray - relations
+      attributes = model.attribute_names if attributes.empty?
+
+      attributes.each do |e|
+        key, alias_key = e.split(':')
+        alias_key = apply_case(alias_key || key, options[:case])
+
+        instruction[:attributes].push({key: key, alias_key: alias_key})
+      end
+
+      relations.each do |e|
+        if e.is_a? String
+          key, alias_key = e.split(':')
+          alias_key = apply_case(alias_key || key, options[:case])
+
+          instruction[:relations].push({key: key, alias_key: alias_key, hasharray: []})
+        else
+          key, alias_key = e.keys.first.split(':')
+          alias_key = apply_case(alias_key || key, options[:case])
+
+          instruction[:relations].push({key: key, alias_key: alias_key, hasharray: e.values.first})
+        end
       end
     end
 
     hash = {}
-    model = record.class
-    all_relations = model.reflections.keys
-
-    relations = hasharray.filter do |e|
-      next true if !e.is_a?(String)
-
-      key, alias_key = e.split(':')
-      all_relations.include?(key)
+    instruction[:attributes].each do |attribute|
+      hash[attribute[:alias_key]] = coerce_value(record.public_send(attribute[:key]))
     end
-
-    attributes = hasharray - relations
-    attributes = model.attribute_names if attributes.empty?
-
-    attributes.each do |e|
-      key, alias_key = e.split(':')
-      alias_key = apply_case(alias_key || key, options[:case])
-
-      hash[alias_key] = coerce_value(record.public_send(key))
-    end
-
-    relations.each do |e|
-      if e.is_a? String
-        key, alias_key = e.split(':')
-        alias_key = apply_case(alias_key || key, options[:case])
-
-        rel_records = record.public_send(key)
-        hash[alias_key] = self.serialize(rel_records, [], options)
-      else
-        key, alias_key = e.keys.first.split(':')
-        alias_key = apply_case(alias_key || key, options[:case])
-
-        rel_records = record.public_send(key)
-        hash[alias_key] = self.serialize(rel_records, e.values.first, options)
-      end
+    instruction[:relations].each do |relation|
+      relation_records = record.public_send(relation[:key])
+      hash[relation[:alias_key]] = self.serialize(relation_records, relation[:hasharray], options, instructions)
     end
 
     hash
