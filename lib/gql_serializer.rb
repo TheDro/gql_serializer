@@ -27,11 +27,11 @@ module GqlSerializer
 
   def self.query_include(model, hasharray)
     include_array = []
-    relations = model.reflections.keys
+    relations = model.reflections
     hasharray.each do |e|
       if e.is_a? String
         key = e.split(':')[0]
-        include_array.push(key) if relations.include?(key)
+        include_array.push(key) if relations[key]
       elsif e.is_a? Hash
         key = e.keys.first.split(':')[0]
         relation_model = model.reflections[key].klass
