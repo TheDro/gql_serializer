@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    gql_serializer (2.1.2)
+    gql_serializer (2.2.0)
       activerecord (>= 5.2, < 8.0)
 
 GEM
