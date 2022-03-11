@@ -25,9 +25,19 @@ module GqlSerializer
     def as_gql(query = nil, options = {})
       query_hasharray = query ? GqlSerializer.parse_query(query) : []
       include_hasharray = GqlSerializer.query_include(self.class, query_hasharray)
-      ::ActiveRecord::Associations::Preloader.new.preload(self, include_hasharray)
+      GqlSerializer._preload([self], include_hasharray)
       options_with_defaults = GqlSerializer.configuration.to_h.merge(options)
       GqlSerializer.serialize(self, query_hasharray, options_with_defaults)
+    end
+  end
+
+  def self._preload(records, include_hasharray)
+    if ::ActiveRecord::VERSION::MAJOR >= 7
+      ::ActiveRecord::Associations::Preloader.
+        new(records: records, associations: include_hasharray).call
+    else
+      ::ActiveRecord::Associations::Preloader.
+        new.preload(records, include_hasharray)
     end
   end
 end
