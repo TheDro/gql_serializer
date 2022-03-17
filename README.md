@@ -120,7 +120,11 @@ In a Rails application, the configuration can be added to an initializer in `con
 
 ```ruby
 GqlSerializer.configure do |config|
-  config.case = GqlSerializer::Configuration::NONE_CASE # no case conversion
+  # no case conversion
+  config.case = GqlSerializer::Configuration::NONE_CASE 
+  # set to true to avoid additional query in some cases. 
+  # The default of false avoids a potential breaking change from version 2.1 to 2.2
+  config.preload = false 
 end
 ```
 

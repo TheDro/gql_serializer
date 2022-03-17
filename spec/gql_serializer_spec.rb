@@ -213,6 +213,27 @@ RSpec.describe GqlSerializer do
         GqlSerializer.configuration.reset
       end
     end
-  end
 
+    describe 'preload' do
+      it 'reloads records when disabled' do
+        original_user = TestUser.create(name: 'John', email: 'john@test.com')
+        TestOrder.create(total: 5.0, test_user: original_user)
+        same_user = TestUser.find(original_user.id)
+        same_user.update(name: 'David')
+
+        expect(original_user.as_gql('name email test_orders {total}'))
+          .to eq({'name' => 'David', 'email' => 'john@test.com', 'test_orders' => [{'total' => 5.0}]})
+      end
+
+      it 'preloads records when enabled' do
+        original_user = TestUser.create(name: 'John', email: 'john@test.com')
+        TestOrder.create(total: 5.0, test_user: original_user)
+        same_user = TestUser.find(original_user.id)
+        same_user.update(name: 'David')
+
+        expect(original_user.as_gql('name email test_orders {total}', {preload: true}))
+          .to eq({'name' => 'John', 'email' => 'john@test.com', 'test_orders' => [{'total' => 5.0}]})
+      end
+    end
+  end
 end
