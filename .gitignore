@@ -13,3 +13,5 @@
 .idea
 .byebug_history
 test.db
+
+*.gem
