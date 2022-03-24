@@ -24,7 +24,7 @@ module GqlSerializer
     end
 
     def to_h
-      {case: @case}
+      self.instance_values.symbolize_keys
     end
   end
 end

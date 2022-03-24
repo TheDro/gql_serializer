@@ -1,11 +1,11 @@
 
 
 RSpec.describe GqlSerializer::Configuration do
-  describe 'case' do
-    after do
-      GqlSerializer.configuration.reset
-    end
+  after do
+    GqlSerializer.configuration.reset
+  end
 
+  describe 'case' do
     it 'supports none, snake case and camel case' do
       GqlSerializer.configure do |config|
         config.case = GqlSerializer::Configuration::NONE_CASE
@@ -25,13 +25,20 @@ RSpec.describe GqlSerializer::Configuration do
     rescue => e
       expect(e.message).to include("not supported")
     end
+  end
 
-    it 'allows preload to be enabled' do
-      GqlSerializer.configure do |config|
-        config.preload = true
-      end
-
-      expect(GqlSerializer.configuration.preload).to eq(true)
+  it 'allows preload to be enabled' do
+    GqlSerializer.configure do |config|
+      config.preload = true
     end
+
+    expect(GqlSerializer.configuration.preload).to eq(true)
+  end
+
+  it 'returns a hash with all of the options' do
+    expect(GqlSerializer.configuration.to_h).to eq({
+      case: GqlSerializer::Configuration::NONE_CASE,
+      preload: false
+    })
   end
 end
