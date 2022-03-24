@@ -11,7 +11,7 @@ module GqlSerializer
       reset
     end
 
-    attr_reader :case, :preload
+    attr_accessor :case, :preload
 
     def case=(value)
       raise "Specified case '#{value}' is not supported" unless SUPPORTED_CASES.include?(value)
