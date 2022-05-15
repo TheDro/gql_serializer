@@ -26,6 +26,7 @@ module GqlSerializer
   end
 
   def self.query_include(model, hasharray)
+    return [] if !model.respond_to?(:reflections)
     include_array = []
     relations = model.reflections
     hasharray.each do |element|
@@ -46,13 +47,16 @@ module GqlSerializer
     include_array
   end
 
-  # example hasharray = ["id", "name", "tags", { "panels" => ["id", { "cards" => ["content"] }] }]
+  # example hasharray = ["id", "name:real_name", "tags", { "panels" => ["id", { "cards" => ["content"] }] }]
   def self.serialize(records, hasharray, options, instructions = {})
 
     if records.nil?
       return nil
     end
 
+    if records.is_a?(Hash)
+      return self.serialize_hash(records, hasharray, options, instructions)
+    end
 
     if records.respond_to? :map
       return records.map do |record|
@@ -83,21 +87,18 @@ module GqlSerializer
       attributes = model.attribute_names if attributes.empty?
 
       attributes.each do |attribute|
-        key, alias_key = attribute.split(':')
-        alias_key = apply_case(alias_key || key, options[:case])
+        key, alias_key = self.get_keys(attribute, options)
 
         instruction[:attributes].push({key: key, alias_key: alias_key})
       end
 
       relations.each do |relation|
         if relation.is_a? String
-          key, alias_key = relation.split(':')
-          alias_key = apply_case(alias_key || key, options[:case])
+          key, alias_key = self.get_keys(relation, options)
 
           instruction[:relations].push({key: key, alias_key: alias_key, hasharray: []})
         else
-          key, alias_key = relation.keys.first.split(':')
-          alias_key = apply_case(alias_key || key, options[:case])
+          key, alias_key = self.get_keys(relation.keys.first, options)
 
           instruction[:relations].push({key: key, alias_key: alias_key, hasharray: relation.values.first})
         end
@@ -111,6 +112,34 @@ module GqlSerializer
     instruction[:relations].each do |relation|
       relation_records = record.public_send(relation[:key])
       hash[relation[:alias_key]] = self.serialize(relation_records, relation[:hasharray], options, instructions)
+    end
+
+    hash
+  end
+
+  def self.serialize_hash(record, hasharray, options, instructions = {})
+    hash = {}
+
+    if hasharray.empty?
+      record.keys.each do |key|
+        value = record[key]
+        next if value.respond_to? :map
+        hash[key.to_s] = coerce_value(value)
+      end
+    else
+      hasharray.each do |relation|
+        if relation.is_a?(String)
+          key, alias_key = self.get_keys(relation, options)
+          value = self.get_hash_value(record, key)
+
+          hash[alias_key] = value
+        else
+          key, alias_key = self.get_keys(relation.keys.first, options)
+          value = self.get_hash_value(record, key)
+
+          hash[alias_key] = self.serialize(value, relation.values.first, options, instructions)
+        end
+      end
     end
 
     hash
@@ -138,6 +167,18 @@ module GqlSerializer
     end
 
     result
+  end
+
+  def self.get_hash_value(hash, key)
+    return hash[key] if hash.key?(key)
+    return hash[key.to_sym] if hash.key?(key.to_sym)
+    raise NoMethodError, "undefined field '#{key.to_s}' for #{hash}"
+  end
+
+  def self.get_keys(attribute, options)
+    key, alias_key = attribute.split(':')
+    alias_key = apply_case(alias_key || key, options[:case])
+    [key, alias_key]
   end
 
   def self.parse_it(query)
@@ -173,6 +214,5 @@ module GqlSerializer
     end
     return result, nil
   end
-
 
 end

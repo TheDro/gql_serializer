@@ -2,8 +2,16 @@ require "active_record"
 
 module GqlSerializer
   module Array
-    def as_gql(query = nil)
-      map { |v| v.as_gql(query) }
+    def as_gql(...)
+      map { |v| v.as_gql(...) }
+    end
+  end
+
+  module Hash
+    def as_gql(query = nil, options = {})
+      options_with_default = GqlSerializer.configuration.to_h.merge(options)
+      query_hasharray = query ? GqlSerializer.parse_query(query) : []
+      GqlSerializer.serialize(self, query_hasharray, options_with_default)
     end
   end
 
@@ -50,3 +58,4 @@ end
 ActiveRecord::Base.include GqlSerializer::ActiveRecord
 ActiveRecord::Relation.include GqlSerializer::Relation
 Array.include GqlSerializer::Array
+Hash.include GqlSerializer::Hash
