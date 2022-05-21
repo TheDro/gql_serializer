@@ -26,7 +26,7 @@ module GqlSerializer
   end
 
   def self.query_include(model, hasharray)
-    return [] if !model.respond_to?(:reflections)
+    return [] if !model.respond_to? :reflections
     include_array = []
     relations = model.reflections
     hasharray.each do |element|
@@ -35,7 +35,8 @@ module GqlSerializer
         include_array.push(key) if relations[key]
       elsif element.is_a? Hash
         key = element.keys.first.split(':')[0]
-        relation_model = model.reflections[key].klass
+        relation_model = model.reflections&.[](key)&.klass
+        next if relation_model.nil?
         relation_hasharray = self.query_include(relation_model, element.values.first)
         if relation_hasharray.empty?
           include_array.push(key)
@@ -63,55 +64,41 @@ module GqlSerializer
         self.serialize(record, hasharray, options, instructions)
       end
     end
+
+    if !records.class.respond_to? :reflections
+      return coerce_value(records)
+    end
     record = records
 
     id = "#{record.class}, #{hasharray}"
     instruction = instructions[id]
     if (!instruction)
-      instruction = {klass: record.class, hasharray: hasharray, relations: [], attributes: []}
+      instruction = {klass: record.class, hasharray: hasharray, attributes: []}
       instructions[id] = instruction
-
 
       model = record.class
       all_relations = model.reflections.keys
-
       relations = hasharray.filter do |relation|
-        next true if !relation.is_a?(String)
-
-        key, alias_key = relation.split(':')
-
+        key, _ = self.get_keys(relation, options)
         all_relations.include?(key)
       end
 
-      attributes = hasharray - relations
-      attributes = model.attribute_names if attributes.empty?
-
-      attributes.each do |attribute|
-        key, alias_key = self.get_keys(attribute, options)
-
-        instruction[:attributes].push({key: key, alias_key: alias_key})
+      if (hasharray - relations).empty?
+        attributes = model.attribute_names + relations
+      else
+        attributes = hasharray
       end
 
-      relations.each do |relation|
-        if relation.is_a? String
-          key, alias_key = self.get_keys(relation, options)
-
-          instruction[:relations].push({key: key, alias_key: alias_key, hasharray: []})
-        else
-          key, alias_key = self.get_keys(relation.keys.first, options)
-
-          instruction[:relations].push({key: key, alias_key: alias_key, hasharray: relation.values.first})
-        end
+      attributes.each do |attribute|
+        key, alias_key, sub_hasharray = self.get_keys(attribute, options)
+        instruction[:attributes].push({key: key, alias_key: alias_key, hasharray: sub_hasharray})
       end
     end
 
     hash = {}
     instruction[:attributes].each do |attribute|
-      hash[attribute[:alias_key]] = coerce_value(record.public_send(attribute[:key]))
-    end
-    instruction[:relations].each do |relation|
-      relation_records = record.public_send(relation[:key])
-      hash[relation[:alias_key]] = self.serialize(relation_records, relation[:hasharray], options, instructions)
+      value = record.public_send(attribute[:key])
+      hash[attribute[:alias_key]] = self.serialize(value, attribute[:hasharray], options, instructions)
     end
 
     hash
@@ -119,27 +106,12 @@ module GqlSerializer
 
   def self.serialize_hash(record, hasharray, options, instructions = {})
     hash = {}
+    attributes = hasharray.empty? ? record.keys : hasharray
 
-    if hasharray.empty?
-      record.keys.each do |key|
-        value = record[key]
-        next if value.respond_to? :map
-        hash[key.to_s] = coerce_value(value)
-      end
-    else
-      hasharray.each do |relation|
-        if relation.is_a?(String)
-          key, alias_key = self.get_keys(relation, options)
-          value = self.get_hash_value(record, key)
-
-          hash[alias_key] = value
-        else
-          key, alias_key = self.get_keys(relation.keys.first, options)
-          value = self.get_hash_value(record, key)
-
-          hash[alias_key] = self.serialize(value, relation.values.first, options, instructions)
-        end
-      end
+    attributes.each do |attribute|
+      key, alias_key, sub_hasharray = self.get_keys(attribute, options)
+      value = self.get_hash_value(record, key)
+      hash[alias_key] = self.serialize(value, sub_hasharray, options, instructions)
     end
 
     hash
@@ -176,9 +148,18 @@ module GqlSerializer
   end
 
   def self.get_keys(attribute, options)
-    key, alias_key = attribute.split(':')
+    if attribute.is_a?(Symbol)
+      key, alias_key = attribute.to_s.split(':')
+      hasharray = []
+    elsif attribute.is_a?(String)
+      key, alias_key = attribute.split(':')
+      hasharray = []
+    else
+      key, alias_key = attribute.keys.first.split(':')
+      hasharray = attribute.values.first
+    end
     alias_key = apply_case(alias_key || key, options[:case])
-    [key, alias_key]
+    [key, alias_key, hasharray]
   end
 
   def self.parse_it(query)
