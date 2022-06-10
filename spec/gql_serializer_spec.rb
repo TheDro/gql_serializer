@@ -154,6 +154,17 @@ RSpec.describe GqlSerializer do
       expect([book].as_gql('id meta_data')).to eq([book.as_gql('id meta_data')])
     end
 
+    it 'serializes objects in hashes' do
+      hash = {message: 'hello_world'}
+
+      expect(hash.as_gql('message{camelcase titlecase:title to_s:value')).to eq({
+        'message' => {'camelcase' => 'HelloWorld', 'title' => 'Hello World', 'value' => 'hello_world'}
+      })
+      expect(hash.as_gql('message{camelcase{first}}')).to eq({
+        'message' => {'camelcase' => {'first' => 'H'}}
+      })
+    end
+
     it 'serializes a mix of hashes and models' do
       author = TestUser.create(name: 'John', email: 'john@test.com')
       book = {id: 1, author: author}
@@ -267,7 +278,7 @@ RSpec.describe GqlSerializer do
         same_user = TestUser.find(original_user.id)
         same_user.update(name: 'David')
 
-        expect(original_user.as_gql('name email test_orders {total}'))
+        expect(original_user.as_gql('name email test_orders {total}', {preload: false}))
           .to eq({'name' => 'David', 'email' => 'john@test.com', 'test_orders' => [{'total' => 5.0}]})
       end
 
@@ -277,7 +288,7 @@ RSpec.describe GqlSerializer do
         same_user = TestUser.find(original_user.id)
         same_user.update(name: 'David')
 
-        expect(original_user.as_gql('name email test_orders {total}', {preload: true}))
+        expect(original_user.as_gql('name email test_orders {total}'))
           .to eq({'name' => 'John', 'email' => 'john@test.com', 'test_orders' => [{'total' => 5.0}]})
       end
     end

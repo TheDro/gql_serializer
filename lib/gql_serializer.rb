@@ -65,11 +65,18 @@ module GqlSerializer
       end
     end
 
-    if !records.class.respond_to? :reflections
-      return coerce_value(records)
+    if records.class.respond_to? :reflections
+      return self.serialize_active_record(records, hasharray, options, instructions)
     end
-    record = records
 
+    if !hasharray.empty?
+      return self.serialize_object(records, hasharray, options, instructions)
+    end
+    
+    return coerce_value(records)
+  end
+
+  def self.serialize_active_record(record, hasharray, options, instructions = {})
     id = "#{record.class}, #{hasharray}"
     instruction = instructions[id]
     if (!instruction)
@@ -99,6 +106,18 @@ module GqlSerializer
     instruction[:attributes].each do |attribute|
       value = record.public_send(attribute[:key])
       hash[attribute[:alias_key]] = self.serialize(value, attribute[:hasharray], options, instructions)
+    end
+
+    hash
+  end
+
+  def self.serialize_object(record, hasharray, options, instructions = {})
+    hash = {}
+
+    hasharray.each do |attribute|
+      key, alias_key, sub_hasharray = self.get_keys(attribute, options)
+      value = record.public_send(key)
+      hash[alias_key] = self.serialize(value, sub_hasharray, options, instructions)
     end
 
     hash

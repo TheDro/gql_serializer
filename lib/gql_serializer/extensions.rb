@@ -2,8 +2,8 @@ require "active_record"
 
 module GqlSerializer
   module Array
-    def as_gql(...)
-      map { |v| v.as_gql(...) }
+    def as_gql(*args)
+      map { |v| v.as_gql(*args) }
     end
   end
 
