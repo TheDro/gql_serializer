@@ -15,6 +15,14 @@ module GqlSerializer
     end
   end
 
+  module Object
+    def as_gql(query = nil, options = {})
+      options_with_default = GqlSerializer.configuration.to_h.merge(options)
+      query_hasharray = query ? GqlSerializer.parse_query(query) : []
+      GqlSerializer.serialize(self, query_hasharray, options_with_default)
+    end
+  end
+
   module Relation
     def as_gql(query = nil, options = {})
       options_with_defaults = GqlSerializer.configuration.to_h.merge(options)
@@ -59,3 +67,5 @@ ActiveRecord::Base.include GqlSerializer::ActiveRecord
 ActiveRecord::Relation.include GqlSerializer::Relation
 Array.include GqlSerializer::Array
 Hash.include GqlSerializer::Hash
+# This is invasive but users can choose to add `as_gql` to all objects in their project with:
+# Object.include GqlSerializer::Object

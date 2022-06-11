@@ -114,6 +114,43 @@ user.as_gql('email_address name:full_name', {case: GqlSerializer::Configuration:
 }
 ```
 
+As of version 3, you can also use as_gql on hashes and embedded objects can also be serialized (`as_gql` is not added to all objects yet).
+
+```ruby
+class Item
+  attr_accessor :name, :price
+  def initialize(name, price)
+    @name = name
+    @price = price
+  end
+  
+  def display
+    name + ': ' + ("%.2f" % price)
+  end
+end
+
+hash = {
+  id: 1, 
+  total_price: 11.50, 
+  items: [
+    Item.new('Thing', 6.00), Item.new('Stuff', 5.50)
+  ]
+}
+
+hash.as_gql('total_price items { name:item_name display }')
+=> {
+  "total_price" => 11.5,
+  "items" => [{
+    "item_name" => "Thing",
+    "display" => "Thing: 6.00"
+  },{
+    "item_name" => "Stuff",
+    "display" => "Stuff: 5.50"
+  }]
+}
+
+```
+
 ## Configuration
 
 In a Rails application, the configuration can be added to an initializer in `config/initalizers/gql_serializer.rb`. The following is the default configuration (no change):
@@ -122,10 +159,12 @@ In a Rails application, the configuration can be added to an initializer in `con
 GqlSerializer.configure do |config|
   # no case conversion
   config.case = GqlSerializer::Configuration::NONE_CASE 
-  # set to true to avoid additional query in some cases. 
-  # The default of false avoids a potential breaking change from version 2.1 to 2.2
-  config.preload = false 
+  # avoids an additional query in some cases. 
+  # Set to false for compatibility with version <= 2.1
+  config.preload = true 
 end
+# Optionally add the `as_gql` method to all objects:
+# Object.include GqlSerializer::Object
 ```
 
 The options for `case` are: `NONE_CASE, CAMEL_CASE, SNAKE_CASE`.

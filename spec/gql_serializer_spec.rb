@@ -201,6 +201,32 @@ RSpec.describe GqlSerializer do
       expect(user.as_gql('encoded_id:id')).to eq({'id' => "TestUser-#{user.id}"})
     end
 
+    describe 'regular objects' do
+      class ObjectUser
+        attr_accessor :first_name, :last_name
+        def initialize(first_name, last_name)
+          @first_name = first_name
+          @last_name = last_name
+        end
+
+        def full_name
+          "#{first_name} #{last_name}"
+        end
+      end
+      ObjectUser.include GqlSerializer::Object
+
+      it 'serializes objects' do
+        user = ObjectUser.new('John', 'Snow')
+
+        expect(user.as_gql('first_name full_name:wholeName')).to eq({
+          'first_name' => 'John', 'wholeName' => 'John Snow'
+        })
+        expect(user.as_gql('first_name last_name { first }')).to eq({
+          'first_name' => 'John', 'last_name' => {'first' => 'S'}
+        })
+      end
+    end
+
     describe 'coerce_value' do
       class CoerceUser < TestUser
         def big_decimal
