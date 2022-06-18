@@ -20,7 +20,7 @@ module GqlSerializer
 
     def reset
       @case = NONE_CASE
-      @preload = false # Default will be true in version 3+
+      @preload = true
     end
 
     def to_h

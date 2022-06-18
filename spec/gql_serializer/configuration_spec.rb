@@ -38,7 +38,7 @@ RSpec.describe GqlSerializer::Configuration do
   it 'returns a hash with all of the options' do
     expect(GqlSerializer.configuration.to_h).to eq({
       case: GqlSerializer::Configuration::NONE_CASE,
-      preload: false
+      preload: true
     })
   end
 end
