@@ -1,6 +1,6 @@
 # GqlSerializer
 
-GqlSerializer is a gem that makes it easy to serialize ActiveRecord objects into json using a short syntax similar to GraphQL instead of the more verbose syntax used by the `as_json` method.
+GqlSerializer is a gem that makes it easy to serialize ActiveRecord objects, hashes and arrays into JSON using a short syntax similar to GraphQL instead of the more verbose syntax used by the `as_json` method.
 
 ## Installation
 
@@ -10,7 +10,7 @@ Add this line to your application's Gemfile:
 gem 'gql_serializer'
 ```
 
-And then execute:
+And then run:
 
     $ bundle install
 
@@ -114,7 +114,7 @@ user.as_gql('email_address name:full_name', {case: GqlSerializer::Configuration:
 }
 ```
 
-As of version 3, you can also use as_gql on hashes and embedded objects can also be serialized (`as_gql` is not added to all objects yet).
+As of version 3, you can use as_gql on hashes. Optionally, objects can also be serialized.
 
 ```ruby
 class Item
