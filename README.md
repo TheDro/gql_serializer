@@ -169,6 +169,10 @@ end
 
 The options for `case` are: `NONE_CASE, CAMEL_CASE, SNAKE_CASE`.
 
+## Compatibility
+
+The current version of this gem has been tested on Rails version up to 8.0, but likely works with newer versions as well.
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
